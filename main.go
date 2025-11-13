@@ -27,14 +27,12 @@ func main() {
 		ComputeChecksums: true,
 	}
 
-	// Cihazı paket yakalama için aç
 	handle, err = pcap.OpenLive(device, snapshotLen, promiscuous, timeout)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer handle.Close()
 
-	// Bu sefer bazı bilgileri dolduralım
 	ethernetLayer := &layers.Ethernet{
 		SrcMAC:       net.HardwareAddr{0x84, 0x3e, 0x1d, 0x29, 0x2e, 0x9a}, // Kendi cihazınızın MAC adresi
 		DstMAC:       net.HardwareAddr{0x68, 0xca, 0xc4, 0x8d, 0xc6, 0x14}, // Hedef cihazın MAC adresi
@@ -55,7 +53,6 @@ func main() {
 	}
 	tcpLayer.SetNetworkLayerForChecksum(ipLayer)
 
-	// Paketi serileştir
 	buffer = gopacket.NewSerializeBuffer()
 	err = gopacket.SerializeLayers(buffer, SerializationOptions,
 		ethernetLayer,
@@ -66,14 +63,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Paketi gönder
 	outgoingPacket := buffer.Bytes()
 	err = handle.WritePacketData(outgoingPacket)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Yanıtı yakala
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 	 for packet := range packetSource.Packets() {
 	 	if tcpLayer := packet.Layer(layers.LayerTypeTCP); tcpLayer != nil {
